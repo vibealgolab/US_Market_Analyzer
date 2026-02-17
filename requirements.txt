@@ -1,0 +1,19 @@
+pandas
+numpy
+yfinance
+tqdm
+requests
+python-dotenv
+python-dotenv
+scipy
+matplotlib
+plotly
+beautifulsoup4
+lxml
+tabulate
+ipython
+lightweight-charts
+chart-studio
+googlesearch-python
+# Google Generative AI for Gemini
+google-generativeai

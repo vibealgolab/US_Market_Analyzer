@@ -1,0 +1,1671 @@
+<!--
+ * vibealgolab.com
+ * Date: 2026-02-14
+ * Developed with VibeCoding using Gemini & Antigravity
+ -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US Market Analyzer - AI Insights</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --primary: #FFC107;
+            --primary-hover: #FFD54F;
+            --bg-deep: #0A0C10;
+            --bg-panel: rgba(16, 20, 24, 0.85);
+            --border-muted: rgba(255, 255, 255, 0.08);
+            --border-bright: rgba(255, 255, 255, 0.15);
+            --text-main: #E2E8F0;
+            --text-muted: #94A3B8;
+            --success: #00C853;
+            --danger: #FF1744;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            overflow: hidden;
+            letter-spacing: -0.01em;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2a2d33;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3a3d44;
+        }
+
+        .glass-panel {
+            background: var(--bg-panel);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-muted);
+            box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-panel:hover {
+            border-color: var(--border-bright);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.3);
+        }
+
+        .premium-border {
+            border-color: #1e2229;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .nav-tab:hover {
+            color: #fff;
+        }
+
+        .nav-tab.active {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .nav-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: var(--primary);
+            box-shadow: 0 0 12px var(--primary);
+            border-radius: 2px;
+        }
+
+        .koyfin-table th {
+            font-weight: 700;
+            color: var(--text-muted);
+            font-size: 11px;
+            padding: 12px 8px;
+            border-bottom: 1px solid #1e2229;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .koyfin-table td {
+            padding: 12px 8px;
+            font-size: 13px;
+            font-weight: 500;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .koyfin-table tr:hover td {
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .price-up {
+            color: var(--success);
+        }
+
+        .price-down {
+            color: var(--danger);
+        }
+
+        .ai-pulse {
+            animation: pulse 2.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 12px rgba(255, 193, 7, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+            }
+        }
+
+        .btn-premium {
+            background: linear-gradient(135deg, #FFC107, #FF9800);
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
+            transition: all 0.3s;
+        }
+
+        .btn-premium:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(255, 152, 0, 0.4);
+            filter: brightness(1.1);
+        }
+
+        /* Background Pipeline Terminal Bar */
+        #pipeline-ticker {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: rgba(15, 18, 22, 0.95);
+            backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            user-select: none;
+        }
+
+        .status-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 20px;
+            border-right: 1px solid rgba(255, 255, 255, 0.03);
+            height: 100%;
+        }
+
+        .status-label {
+            font-size: 9px;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        .status-value {
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        .status-idle {
+            color: var(--text-muted) !important;
+            opacity: 0.6;
+        }
+
+        .status-details {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 11px;
+        }
+
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--primary);
+            animation: dot-pulse 2s infinite;
+        }
+
+        @keyframes dot-pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.5);
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body class="flex flex-col h-screen w-screen text-sm bg-[#0b0e11]">
+
+    <!-- Top Header -->
+    <header class="h-16 border-b premium-border flex items-center px-6 justify-between shrink-0 bg-[#0F1216]">
+        <div class="flex items-center gap-8">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 bg-gradient-to-br from-[#FFC107] to-[#FF9800] rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
+                    <i class="fas fa-chart-line text-black text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold text-white tracking-tight leading-none">US Market Analyzer</h1>
+                    <p class="text-[10px] text-[--primary] font-bold uppercase tracking-[0.2em] mt-1">Intelligence
+                        Terminal</p>
+                </div>
+            </div>
+            <div class="h-8 w-px bg-white/5"></div>
+            <div class="flex items-center gap-5 text-xs font-semibold">
+                <span id="market-status"
+                    class="flex items-center gap-2 px-3 py-1 bg-green-500/10 text-green-400 rounded-full border border-green-500/20">
+                    <span class="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span> Live Market
+                </span>
+                <span id="last-updated" class="text-gray-500 font-mono">--:--:--</span>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="flex-1 max-w-lg mx-12">
+            <div class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-slate-500 group-focus-within:text-[--primary] transition-colors"></i>
+                </div>
+                <input type="text" id="ticker-search"
+                    class="block w-full pl-11 pr-4 py-2 border border-white/5 rounded-xl bg-white/5 text-white placeholder-slate-500 focus:outline-none focus:border-[--primary]/30 focus:bg-white/[0.08] transition-all"
+                    placeholder="Search Symbols (e.g. NVDA, TSLA)">
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <!-- Gemini Quota Monitor -->
+            <div id="gemini-quota-box"
+                class="flex items-center gap-3 px-4 py-1.5 glass-panel rounded-xl border-white/5">
+                <div class="flex flex-col items-end">
+                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Gemini Status</span>
+                    <div class="flex items-center gap-2">
+                        <span id="quota-count" class="text-xs font-black text-white">-- RPD</span>
+                        <span id="quota-dots" class="flex gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                        </span>
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-lg bg-[--primary]/10 flex items-center justify-center">
+                    <i class="fas fa-brain text-[--primary] text-xs"></i>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-1 min-w-[150px]">
+                <button id="run-pipeline-btn" onclick="runPipeline()"
+                    class="btn-premium text-black px-6 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2">
+                    <i class="fas fa-bolt"></i> RUN ANALYSIS
+                </button>
+                <div id="pipeline-progress-container" class="hidden">
+                    <div class="flex justify-between text-[8px] text-slate-500 font-bold uppercase mb-0.5">
+                        <span id="pipeline-task">Idle</span>
+                        <span id="pipeline-percent">0%</span>
+                    </div>
+                    <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                        <div id="pipeline-bar" class="bg-[--primary] h-full transition-all duration-500"
+                            style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div
+                class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white font-bold cursor-pointer hover:bg-white/10 transition-colors">
+                JD
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="h-12 border-b premium-border flex items-center px-6 bg-[#0F1216] shrink-0 gap-1">
+        <div id="tab-dashboard" class="nav-tab active" onclick="switchTab('dashboard')">Terminal Overview</div>
+        <div id="tab-macro" class="nav-tab" onclick="switchTab('macro')">Macro Analysis</div>
+        <div id="tab-risk" class="nav-tab" onclick="switchTab('risk')"><i class="fas fa-shield-halved mr-2"></i>Risk &
+            Insider</div>
+        <div id="tab-etf" class="nav-tab" onclick="switchTab('etf')">ETF Flow Matrix</div>
+        <div id="tab-options" class="nav-tab" onclick="switchTab('options')">Dark Pool Options</div>
+        <div id="tab-calendar" class="nav-tab" onclick="switchTab('calendar')">Economic Calendar</div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto p-4 flex flex-col gap-4">
+
+        <div id="view-dashboard" class="view-content flex flex-col gap-4">
+
+            <!-- Top Row: Market Indices -->
+            <section id="market-indices" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                <!-- Populated by JS -->
+                <div class="glass-panel rounded-lg p-3 animate-pulse h-20"></div>
+                <div class="glass-panel rounded-lg p-3 animate-pulse h-20"></div>
+                <div class="glass-panel rounded-lg p-3 animate-pulse h-20"></div>
+                <div class="glass-panel rounded-lg p-3 animate-pulse h-20"></div>
+            </section>
+
+            <!-- Main Grid -->
+            <div class="grid grid-cols-12 gap-4 flex-1 min-h-0">
+
+                <!-- Left Side: Table & List (Span 7) -->
+                <div class="col-span-12 lg:col-span-7 flex flex-col gap-4 min-h-0">
+
+                    <!-- Smart Money Picks -->
+                    <div class="glass-panel rounded-2xl overflow-hidden flex flex-col min-h-[420px]">
+                        <div
+                            class="px-6 py-4 border-b premium-border flex items-center justify-between bg-white/[0.02]">
+                            <h2
+                                class="text-sm font-extrabold text-[--primary] flex items-center gap-3 tracking-wide uppercase">
+                                <i class="fas fa-bolt text-lg"></i> AI Smart Money Picks
+                            </h2>
+                            <span id="screener-date"
+                                class="text-[10px] text-slate-500 font-bold bg-white/5 px-3 py-1 rounded-full border border-white/5">UPDATED:
+                                --</span>
+                        </div>
+                        <div class="flex-1 overflow-auto p-2">
+                            <table class="w-full koyfin-table">
+                                <thead>
+                                    <tr>
+                                        <th class="text-left">Symbol</th>
+                                        <th>Sector</th>
+                                        <th>Score</th>
+                                        <th>AI Grade</th>
+                                        <th class="text-right">Price</th>
+                                        <th class="text-right">5D %</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="smart-money-table">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ETF Flows Row -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="glass-panel rounded-xl p-4">
+                            <h3 class="text-xs font-bold text-green-400 mb-3 uppercase tracking-wider">Top Sector
+                                Inflows</h3>
+                            <div id="etf-inflows" class="space-y-2"></div>
+                        </div>
+                        <div class="glass-panel rounded-xl p-4">
+                            <h3 class="text-xs font-bold text-red-400 mb-3 uppercase tracking-wider">Top Sector Outflows
+                            </h3>
+                            <div id="etf-outflows" class="space-y-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side: Chart & AI Analysis (Span 5) -->
+                <div class="col-span-12 lg:col-span-5 flex flex-col gap-4 min-h-0">
+
+                    <!-- Stock Chart Card -->
+                    <div class="glass-panel rounded-2xl p-6 flex flex-col">
+                        <div class="flex items-center justify-between mb-5 shrink-0">
+                            <div class="flex items-center gap-4">
+                                <div id="chart-ticker-icon"
+                                    class="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xl font-bold text-[--primary]">
+                                    ?</div>
+                                <div>
+                                    <h2 id="chart-ticker" class="text-xl font-extrabold text-white tracking-tight">
+                                        Select Ticker</h2>
+                                    <p id="chart-name"
+                                        class="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
+                                        Terminal Ready</p>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end gap-2">
+                                <div class="flex gap-1 bg-[#2b3139] p-0.5 rounded">
+                                    <button id="btn-1mo" onclick="changePeriod('1mo')"
+                                        class="period-btn px-2 py-0.5 text-[10px] text-gray-400 hover:text-white">1M</button>
+                                    <button id="btn-1y" onclick="changePeriod('1y')"
+                                        class="period-btn px-2 py-0.5 text-[10px] text-white bg-[#474d57] rounded-sm">1Y</button>
+                                </div>
+                                <div class="flex gap-2 text-[10px]">
+                                    <label
+                                        class="flex items-center gap-1 cursor-pointer hover:text-white text-gray-400">
+                                        <input type="checkbox" id="check-bb" onchange="toggleIndicator('bb')"
+                                            class="accent-[#f0b90b]"> BB
+                                    </label>
+                                    <label
+                                        class="flex items-center gap-1 cursor-pointer hover:text-white text-gray-400">
+                                        <input type="checkbox" id="check-rsi" onchange="toggleIndicator('rsi')"
+                                            class="accent-[#f0b90b]"> RSI
+                                    </label>
+                                    <label
+                                        class="flex items-center gap-1 cursor-pointer hover:text-white text-gray-400">
+                                        <input type="checkbox" id="check-macd" onchange="toggleIndicator('macd')"
+                                            class="accent-[#f0b90b]"> MACD
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="price-chart" class="h-[300px] w-full mt-2"></div>
+                        <!-- Sub-charts for Indicators -->
+                        <div id="rsi-chart" class="h-[100px] w-full mt-1 hidden box-border border-t border-[#2a2d33]">
+                        </div>
+                        <div id="macd-chart" class="h-[100px] w-full mt-1 hidden box-border border-t border-[#2a2d33]">
+                        </div>
+                    </div>
+
+                    <!-- AI Analysis Card -->
+                    <div
+                        class="glass-panel rounded-2xl p-6 flex flex-col flex-1 border-l-[6px] border-l-[--primary] relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                            <i class="fas fa-robot text-8xl text-[--primary]"></i>
+                        </div>
+                        <div class="flex items-center justify-between mb-5 shrink-0 relative z-10">
+                            <h3
+                                class="flex items-center gap-3 font-extrabold text-white uppercase tracking-[0.1em] text-xs">
+                                <span class="w-2 h-2 rounded-full bg-[--primary] animate-ping"></span>
+                                AI Investment Intelligence
+                            </h3>
+                            <span
+                                class="text-[9px] bg-[--primary]/10 text-[--primary] px-3 py-1 rounded-full font-black border border-[--primary]/20">G-2.0
+                                CORE</span>
+                        </div>
+                        <div id="ai-summary-content"
+                            class="text-sm leading-relaxed text-slate-300 font-medium italic h-full overflow-auto relative z-10">
+                            System standby. Please select a security for deep-intelligence analysis...
+                        </div>
+                    </div>
+
+                    <!-- Options View Mini -->
+                    <div class="glass-panel rounded-xl p-4">
+                        <h3 class="text-xs font-bold text-orange-400 mb-3 uppercase tracking-wider">Options Sentiment
+                        </h3>
+                        <div id="options-mini" class="grid grid-cols-2 gap-4">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sector Heatmap Section -->
+        <section class="glass-panel rounded-2xl p-6 flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-extrabold text-white flex items-center gap-3 uppercase tracking-wider">
+                    <i class="fas fa-th-large text-[--primary]"></i> Sector Performance Heatmap
+                </h2>
+                <div class="flex items-center gap-2 text-[10px] text-slate-500 font-bold">
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[--success]"></span>
+                        Positive</span>
+                    <span class="flex items-center gap-1 ml-2"><span class="w-2 h-2 rounded-full bg-[--danger]"></span>
+                        Negative</span>
+                </div>
+            </div>
+            <div id="sector-heatmap" class="h-[300px] w-full rounded-xl overflow-hidden"></div>
+        </section>
+
+        <!-- Sections for other views -->
+        <div id="view-macro" class="view-content hidden">
+            <section
+                class="glass-panel rounded-2xl p-8 border-l-[6px] border-l-blue-500 bg-gradient-to-br from-blue-600/5 to-transparent relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-6 opacity-10">
+                    <i class="fas fa-globe-americas text-8xl text-blue-500"></i>
+                </div>
+                <div class="flex gap-6 relative z-10">
+                    <div
+                        class="w-14 h-14 bg-blue-500/10 rounded-xl flex items-center justify-center text-3xl shadow-inner">
+                        🌏</div>
+                    <div class="flex-1">
+                        <h2 class="text-xs font-black text-blue-400 mb-3 uppercase tracking-[0.2em]">Strategic Macro
+                            Intelligence</h2>
+                        <div id="macro-summary-detail"
+                            class="text-base text-slate-200 leading-relaxed font-medium whitespace-pre-wrap max-w-4xl">
+                            Synchronizing global macro data terminal...
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div id="view-risk" class="view-content hidden">
+            <div class="grid grid-cols-12 gap-6">
+                <!-- Insider Trading Move (Left 7)-->
+                <div class="col-span-12 lg:col-span-7 flex flex-col gap-6">
+                    <div class="glass-panel rounded-2xl p-6 border-l-[6px] border-l-[--primary]">
+                        <h2
+                            class="text-sm font-black text-white uppercase tracking-widest mb-6 flex items-center gap-3">
+                            <i class="fas fa-user-secret text-[--primary]"></i> Modern Insider Tracker
+                        </h2>
+                        <div id="insider-list" class="space-y-4">
+                            <!-- Populated by JS -->
+                            <div class="text-slate-500 italic text-xs">Loading signals...</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Risk Alerts (Right 5) -->
+                <div class="col-span-12 lg:col-span-5 flex flex-col gap-6">
+                    <div
+                        class="glass-panel rounded-2xl p-6 bg-gradient-to-br from-red-500/5 to-transparent border border-red-500/10">
+                        <h2
+                            class="text-sm font-black text-red-400 uppercase tracking-widest mb-6 flex items-center gap-3">
+                            <i class="fas fa-radiation"></i> Portfolio Risk Guard
+                        </h2>
+                        <div id="risk-signals-box" class="space-y-4">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-etf" class="view-content hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-panel rounded-2xl p-6 border-t-4 border-t-[--success]">
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="fas fa-arrow-trend-up text-[--success] text-xl"></i>
+                        <h2 class="text-sm font-extrabold text-white uppercase tracking-wider">Sector Velocity: Inflows
+                        </h2>
+                    </div>
+                    <div id="etf-inflows-detail" class="space-y-4"></div>
+                </div>
+                <div class="glass-panel rounded-2xl p-6 border-t-4 border-t-[--danger]">
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="fas fa-arrow-trend-down text-[--danger] text-xl"></i>
+                        <h2 class="text-sm font-extrabold text-white uppercase tracking-wider">Sector Velocity: Outflows
+                        </h2>
+                    </div>
+                    <div id="etf-outflows-detail" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-options" class="view-content hidden">
+            <div class="glass-panel rounded-2xl p-8">
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center gap-4">
+                        <i class="fas fa-bolt text-orange-500 text-2xl"></i>
+                        <h2 class="text-xl font-black text-white uppercase tracking-tighter">Dark Pool Unusual Options
+                        </h2>
+                    </div>
+                    <span
+                        class="px-4 py-1.5 bg-orange-500/10 text-orange-500 text-[10px] font-black rounded-full border border-orange-500/20">REAL-TIME
+                        SCANNER</span>
+                </div>
+                <div id="options-detailed-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+        </div>
+
+        <div id="view-calendar" class="view-content hidden">
+            <div
+                class="glass-panel rounded-2xl p-8 border-l-[6px] border-l-purple-500 bg-gradient-to-br from-purple-600/5 to-transparent relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-6 opacity-10">
+                    <i class="fas fa-calendar-alt text-8xl text-purple-500"></i>
+                </div>
+                <div class="flex items-center gap-4 mb-8 relative z-10">
+                    <i class="fas fa-calendar-day text-purple-500 text-2xl"></i>
+                    <h2 class="text-xl font-black text-white uppercase tracking-tighter">Economic Event Horizon</h2>
+                </div>
+                <div id="calendar-content" class="space-y-4 relative z-10">
+                    <div class="animate-pulse text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">
+                        Synchronizing event calendar...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Background Pipeline Terminal Bar -->
+    <div id="pipeline-ticker">
+        <div class="status-section">
+            <span class="status-label">Activity</span>
+            <span id="stat-activity" class="status-value status-idle">System Ready</span>
+        </div>
+
+        <div class="status-section">
+            <span class="status-label">Target</span>
+            <span id="stat-target" class="status-value">---</span>
+        </div>
+
+        <div class="status-section">
+            <span class="status-label">Progress</span>
+            <span id="stat-progress" class="status-value">Idle</span>
+        </div>
+
+        <div id="status-details-box" class="status-section border-0 opacity-0 transition-opacity">
+            <div class="status-details">
+                <div class="pulse-dot"></div>
+                <span id="stat-details">Initializing...</span>
+            </div>
+        </div>
+
+        <div class="px-6 text-[9px] text-slate-600 font-mono ml-auto">
+            LAST SYNC: <span id="stat-sync">--:--:--</span>
+        </div>
+    </div>
+
+    <script>
+        // --- API Integration ---
+        async function initDashboard() {
+            updateTimestamp();
+            loadMacroData();
+            loadSmartMoneyPicks();
+            loadETFFlows();
+            loadOptionsFlow();
+            loadCalendar();
+            loadRiskData();
+            updateQuotaStatus();
+            updateMarketStatus();
+            updatePipelineProgress(); // Initial check
+            pollPipelineStatus(); // Start ticker polling
+            // Auto-trigger analysis on startup (Silent)
+            runPipeline(true);
+            // Polling
+            setInterval(updateQuotaStatus, 30000);
+            setInterval(updatePipelineProgress, 5000); // Poll progress every 5s
+            setInterval(updateMarketStatus, 60000); // Check market every minute
+
+            // Periodic Data Refreshes (1 Hour)
+            setInterval(loadMacroData, 3600000);
+            setInterval(loadCalendar, 3600000);
+            setInterval(loadSmartMoneyPicks, 3600000);
+            setInterval(loadRiskData, 3600000);
+
+            // Ticker Search Event
+            document.getElementById('ticker-search').onkeyup = (e) => {
+                if (e.key === 'Enter') {
+                    const symbol = e.target.value.toUpperCase().trim();
+                    if (symbol) selectTicker({ ticker: symbol, name: 'Search Result' });
+                }
+            };
+        }
+
+        let tickerScrollPos = 0;
+        function scrollTicker(direction) {
+            const scrollEl = document.getElementById('ticker-scroll');
+            scrollEl.style.animation = 'none'; // Disable animation during manual scroll
+            const step = 200;
+            if (direction === 'left') tickerScrollPos += step;
+            else tickerScrollPos -= step;
+
+            // Limit scroll pos
+            if (tickerScrollPos > 0) tickerScrollPos = 0;
+
+            scrollEl.style.transform = `translateX(${tickerScrollPos}px)`;
+        }
+
+        async function pollPipelineStatus() {
+            try {
+                const res = await fetch('/api/pipeline-status');
+                const data = await res.json();
+                const scrollEl = document.getElementById('ticker-scroll');
+
+                if (data.is_running) {
+                    scrollEl.innerHTML = `
+                        <div class="ticker-item ticker-status-active">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            IN PROGRESS: <span class="text-white">${data.current_task}</span>
+                        </div>
+                        <div class="ticker-item">
+                            PROGRESS: <span class="text-white">${data.progress}</span>
+                        </div>
+                        <div class="ticker-item ticker-status-active">
+                            <i class="fas fa-microchip"></i>
+                            PIPELINE ACTIVE: <span class="text-white">Real-time data synchronization in progress</span>
+                        </div>
+                    `;
+                    // Resume animation if it was paused/manual
+                    if (scrollEl.style.animation === 'none') {
+                        scrollEl.style.animation = 'ticker 30s linear infinite';
+                        tickerScrollPos = 0;
+                    }
+                } else {
+                    scrollEl.innerHTML = `
+                        <div class="ticker-item">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            System Idle: <span class="text-white">Analysis pipeline ready</span>
+                        </div>
+                        <div class="ticker-item">
+                            <i class="fas fa-clock text-gray-400"></i>
+                            LAST SYNC: <span class="text-white">${data.timestamp || 'N/A'}</span>
+                        </div>
+                    `;
+                }
+            } catch (e) { console.error('Ticker Poll Failed'); }
+            setTimeout(pollPipelineStatus, 15000); // Poll every 15s
+        }
+
+        async function updatePipelineProgress() {
+            const container = document.getElementById('pipeline-progress-container');
+            const taskEl = document.getElementById('pipeline-task');
+            const percentEl = document.getElementById('pipeline-percent');
+            const barEl = document.getElementById('pipeline-bar');
+            const btn = document.getElementById('run-pipeline-btn');
+
+            try {
+                const res = await fetch('/api/pipeline-status');
+                const data = await res.json();
+
+                if (data.is_running) {
+                    container.classList.remove('hidden');
+                    taskEl.textContent = data.current_task;
+                    percentEl.textContent = data.progress;
+                    const cleanPercent = data.progress.replace(/\[|\]|%/g, '').split('/')[0];
+                    const total = data.progress.includes('/') ? data.progress.split('/')[1].replace(']', '') : 100;
+                    const width = (cleanPercent / total) * 100;
+                    barEl.style.width = (width || 5) + '%';
+
+                    if (btn) {
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin text-orange-400"></i> Processing...';
+                        btn.disabled = true;
+                    }
+                } else {
+                    container.classList.add('hidden');
+                    if (btn) {
+                        btn.innerHTML = '<i class="fas fa-bolt"></i> RUN ANALYSIS';
+                        btn.disabled = false;
+                    }
+                }
+            } catch (e) { console.error('Progress fetch failed'); }
+        }
+
+        async function runPipeline(isAuto = false) {
+            const btn = document.getElementById('run-pipeline-btn');
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running...';
+                btn.disabled = true;
+            }
+            try {
+                const res = await fetch('/api/run-pipeline', { method: 'POST' });
+                const data = await res.json();
+                if (!isAuto) {
+                    if (data.status === 'started') alert('Analysis pipeline started in background. Refresh in 2-3 mins.');
+                    else if (data.status === 'skipped') alert('Already up to date. (Cooldown active)');
+                    else alert('System Busy: Pipeline is already running.');
+                }
+            } catch (e) {
+                if (!isAuto) alert('Failed to start pipeline: ' + e);
+            }
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i> Run Analysis';
+                btn.disabled = false;
+            }
+        }
+
+        function switchTab(viewId) {
+            // Update Tab UI
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + viewId).classList.add('active');
+
+            // Show/Hide Views
+            document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
+            document.getElementById('view-' + viewId).classList.remove('hidden');
+        }
+
+        async function updateQuotaStatus() {
+            try {
+                const res = await fetch('/api/us/quota-status');
+                const data = await res.json();
+                const countEl = document.getElementById('quota-count');
+                const dotsEl = document.getElementById('quota-dots');
+
+                const remainingToday = data.rpd_limit - data.total_requests_today;
+                countEl.innerHTML = `${remainingToday} RPD <span class="text-[0.7em] opacity-60">(${data.active_keys} Keys)</span>`;
+
+                // RPM Visual Indicator (v2.0: Dynamic green/orange/red dots)
+                const rpm = data.requests_this_minute;
+                dotsEl.innerHTML = '';
+                for (let i = 0; i < 3; i++) {
+                    const dot = document.createElement('span');
+                    let color = 'bg-green-500';
+                    if (rpm > 8) color = 'bg-red-500 animate-pulse';
+                    else if (rpm > 5) color = 'bg-orange-500';
+
+                    dot.className = `w-1.5 h-1.5 rounded-full ${color}`;
+                    dotsEl.appendChild(dot);
+                }
+
+                const box = document.getElementById('gemini-quota-box');
+                if (remainingToday < (data.active_keys * 50)) {
+                    box.classList.add('border-red-500/50', 'bg-red-500/5');
+                } else {
+                    box.classList.remove('border-red-500/50', 'bg-red-500/5');
+                }
+            } catch (e) { console.error('Quota Fetch Error:', e); }
+        }
+
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('last-updated').textContent = now.toLocaleTimeString();
+        }
+
+        async function loadMacroData() {
+            try {
+                const res = await fetch('/api/us/macro-analysis');
+                if (!res.ok) throw new Error('Not found');
+                const data = await res.json();
+
+                // Render Indicators
+                const container = document.getElementById('market-indices');
+                container.innerHTML = '';
+                if (data.macro_indicators) {
+                    for (const [name, val] of Object.entries(data.macro_indicators)) {
+                        const changeClass = val.change_1d >= 0 ? 'text-[--success]' : 'text-[--danger]';
+                        const sign = val.change_1d >= 0 ? '+' : '';
+                        const div = document.createElement('div');
+                        div.className = 'glass-panel rounded-xl p-4 border-b-2 border-b-transparent hover:border-b-[--primary] shadow-lg';
+                        div.innerHTML = `
+                            <div class="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider mb-2">${name}</div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-lg font-black text-white leading-none">${val.value.toLocaleString()}</span>
+                                <div class="flex flex-col items-end">
+                                    <span class="text-[11px] font-bold ${changeClass} leading-none">${sign}${val.change_1d}%</span>
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(div);
+                    }
+                }
+
+                if (data.ai_analysis) {
+                    const content = data.ai_analysis;
+                    const summaryEl = document.getElementById('macro-summary-detail');
+                    if (summaryEl) {
+                        summaryEl.innerHTML = typeof marked !== 'undefined' ? marked.parse(content) : content;
+                    }
+                }
+            } catch (e) { console.error('Macro Error:', e); }
+        }
+
+        async function loadSmartMoneyPicks() {
+            try {
+                const res = await fetch('/api/us/smart-money');
+                const data = await res.json();
+                const table = document.getElementById('smart-money-table');
+                table.innerHTML = '';
+
+                data.top_picks.forEach((p, idx) => {
+                    const row = document.createElement('tr');
+                    row.className = 'cursor-pointer transition-all border-b border-white/[0.02] hover:bg-white/[0.04]';
+                    const changeVal = p.change_5d || p.change_1d || 0;
+                    const changeClass = changeVal >= 0 ? 'text-[--success]' : 'text-[--danger]';
+                    const sign = changeVal >= 0 ? '+' : '';
+
+                    row.innerHTML = `
+                        <td class="py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-bold text-[--primary] border border-white/5">${p.ticker}</div>
+                                <div>
+                                    <div class="font-bold text-white">${p.ticker}</div>
+                                    <div class="text-[10px] text-slate-500 font-medium">${p.name || ''}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-wider border border-blue-500/10">${p.sector || 'N/A'}</span></td>
+                        <td class="font-black text-[--primary] text-center">${p.composite_score || p.final_score}</td>
+                        <td class="text-center"><span class="px-2 py-0.5 rounded bg-white/5 font-black text-xs ${p.grade.includes('S') ? 'text-[--primary]' : 'text-slate-400'}">${p.grade}</span></td>
+                        <td class="font-mono text-white text-right">$${parseFloat(p.current_price || p.price).toFixed(2)}</td>
+                        <td class="font-black ${changeClass} text-right">${sign}${changeVal}%</td>
+                    `;
+                    row.onclick = () => selectTicker(p);
+                    table.appendChild(row);
+                });
+
+                if (data.top_picks.length > 0) selectTicker(data.top_picks[0]);
+            } catch (e) { console.error('Screener Error:', e); }
+        }
+
+        let currentChart = null;
+        let rsiChart = null;
+        let macdChart = null;
+        let heatmapChart = null;
+        let bbSeriesUpper = null;
+        let bbSeriesLower = null;
+        let bbSeriesMiddle = null;
+        let currentPeriod = '1y';
+        let currentTicker = '';
+        let isSummarizing = false;
+        let indicatorData = null;
+
+        async function selectTicker(pick) {
+            try {
+                const ticker = pick.ticker;
+                currentTicker = ticker;
+
+                document.getElementById('chart-ticker').textContent = ticker;
+                document.getElementById('chart-name').textContent = pick.name || 'Terminal Data';
+
+                // Update Icon
+                const icon = document.getElementById('chart-ticker-icon');
+                icon.textContent = ticker;
+                icon.className = "w-12 h-12 rounded-xl bg-gradient-to-br from-[--primary] to-[#FF9800] flex items-center justify-center text-[10px] font-black text-black shadow-lg shadow-orange-500/20";
+
+                // Load Summary (Async)
+                loadAISummary(ticker);
+
+                // Load Chart FIRST
+                await renderChart(ticker);
+
+                // If ticker changed while rendering, stop
+                if (currentTicker !== ticker) return;
+
+                await loadIndicatorData(ticker);
+            } catch (e) {
+                console.error('Select Ticker Error:', e);
+            }
+        }
+
+        async function loadAISummary(ticker) {
+            if (isSummarizing) return;
+            const content = document.getElementById('ai-summary-content');
+            content.innerHTML = '<div class="flex items-center gap-2 text-gray-400 italic"><i class="fas fa-spinner fa-spin"></i> Checking for existing analysis...</div>';
+            try {
+                const res = await fetch(`/api/us/ai-summary/${ticker}`);
+                const data = await res.json();
+
+                if (currentTicker !== ticker) return;
+
+                if (data.summary) {
+                    content.innerHTML = typeof marked !== 'undefined' ? marked.parse(data.summary) : data.summary;
+                } else {
+                    content.innerHTML = `
+                        <div class="flex flex-col items-center justify-center p-8 bg-white/5 rounded-2xl border border-white/5">
+                            <i class="fas fa-robot text-4xl text-white/10 mb-4"></i>
+                            <div class="text-sm text-gray-400 mb-6 text-center max-w-[200px]">AI insights for this ticker have not been generated yet.</div>
+                            <button onclick="requestAISummary('${ticker}')" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[--primary] to-orange-500 text-black text-[11px] font-black uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-lg shadow-orange-500/20">
+                                <i class="fas fa-sparkles"></i> ANALYZE WITH AI
+                            </button>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                console.error('AI Summary Error:', e);
+                content.textContent = "Failed to load AI summary.";
+            }
+        }
+
+        async function requestAISummary(ticker) {
+            if (isSummarizing) return;
+            isSummarizing = true;
+            const content = document.getElementById('ai-summary-content');
+            content.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-8">
+                    <div class="relative mb-6">
+                        <div class="w-16 h-16 rounded-full border-4 border-orange-500/10 border-t-orange-500 animate-spin"></div>
+                        <i class="fas fa-robot absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-orange-500 text-xl animate-pulse"></i>
+                    </div>
+                    <div class="text-xs font-black text-white uppercase tracking-widest mb-2">Architecting Insights</div>
+                    <div class="text-[10px] text-gray-500 font-bold uppercase tracking-widest text-center">Synthesizing news & technical signals for ${ticker}...</div>
+                </div>
+            `;
+
+            try {
+                const res = await fetch(`/api/us/generate-ai-summary/${ticker}`, { method: 'POST' });
+                if (currentTicker !== ticker) return;
+
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    let errorData;
+                    try { errorData = JSON.parse(errorText); } catch (e) { }
+                    throw new Error(errorData?.error || `Server Error (${res.status})`);
+                }
+
+                const data = await res.json();
+
+                if (data.summary && !data.summary.includes("Error:")) {
+                    content.innerHTML = typeof marked !== 'undefined' ? marked.parse(data.summary) : data.summary;
+                    updateTimestamp();
+                } else {
+                    throw new Error(data.summary || data.error || 'AI service currently unavailable.');
+                }
+            } catch (e) {
+                content.innerHTML = `
+                    <div class="p-6 text-center bg-red-500/5 border border-red-500/20 rounded-2xl">
+                        <i class="fas fa-exclamation-triangle text-red-500 mb-2"></i>
+                        <div class="text-[11px] font-black text-red-400 uppercase tracking-wider mb-1">Analysis Failed</div>
+                        <div class="text-[10px] text-red-400/60 font-medium mb-4">${e.message}</div>
+                        <button onclick="requestAISummary('${ticker}')" class="px-4 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-[9px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all">
+                            Retry Analysis
+                        </button>
+                    </div>
+                `;
+            } finally {
+                isSummarizing = false;
+            }
+        }
+
+        function updateMarketStatus() {
+            const now = new Date();
+            // US Eastern Time (approximate UTC-5/UTC-4)
+            // Simplified logic: Weekdays 9:30 AM - 4:00 PM EST
+            const estOffset = -5; // Standard Time
+            const estDate = new Date(now.getTime() + (estOffset * 3600000) + (now.getTimezoneOffset() * 60000));
+
+            const hours = estDate.getHours();
+            const mins = estDate.getMinutes();
+            const day = estDate.getDay(); // 0: Sun, 6: Sat
+
+            const isOpen = (day >= 1 && day <= 5) && ((hours > 9 || (hours === 9 && mins >= 30)) && (hours < 16));
+
+            const statusEl = document.getElementById('market-status');
+            if (isOpen) {
+                statusEl.className = "flex items-center gap-2 px-3 py-1 bg-green-500/10 text-green-400 rounded-full border border-green-500/20";
+                statusEl.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span> US Market Open';
+            } else {
+                statusEl.className = "flex items-center gap-2 px-3 py-1 bg-gray-500/10 text-gray-400 rounded-full border border-gray-500/20";
+                statusEl.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-gray-500"></span> US Market Closed';
+            }
+        }
+
+        async function loadRiskData() {
+            try {
+                const res = await fetch('/api/us/risk-overview');
+                const data = await res.json();
+
+                // 1. Render Insider Moves
+                const insiderList = document.getElementById('insider-list');
+                insiderList.innerHTML = '';
+                if (data.insider_moves && data.insider_moves.length > 0) {
+                    data.insider_moves.forEach(move => {
+                        const div = document.createElement('div');
+                        div.className = "flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-[--primary]/20 transition-all";
+                        const buyClass = move.transaction_type.includes('Buy') ? 'text-green-400' : 'text-red-400';
+                        div.innerHTML = `
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center font-bold text-[--primary]">${move.ticker}</div>
+                                <div>
+                                    <div class="text-xs font-bold text-white">${move.insider_name}</div>
+                                    <div class="text-[10px] text-slate-500 uppercase font-black">${move.position}</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="${buyClass} text-xs font-black uppercase">${move.transaction_type}</div>
+                                <div class="text-[10px] text-white font-mono">$${move.value_usd.toLocaleString()}</div>
+                            </div>
+                        `;
+                        insiderList.appendChild(div);
+                    });
+                } else {
+                    insiderList.innerHTML = '<div class="p-8 text-center text-slate-500 text-xs">No significant insider moves detected today.</div>';
+                }
+
+                // 2. Render Risk Signals
+                const riskBox = document.getElementById('risk-signals-box');
+                riskBox.innerHTML = '';
+
+                if (data.risk_signals && data.risk_signals.risks) {
+                    data.risk_signals.risks.forEach(risk => {
+                        const color = risk.level === 'High' ? 'red' : (risk.level === 'Medium' ? 'orange' : 'blue');
+                        const div = document.createElement('div');
+                        div.className = `p-4 rounded-xl border border-${color}-500/20 bg-${color}-500/5 transition-all`;
+                        div.innerHTML = `
+                             <div class="flex items-center justify-between mb-2">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-${color}-400">${risk.category}</span>
+                                <span class="px-2 py-0.5 rounded-full bg-${color}-500/20 text-${color}-400 text-[8px] font-black uppercase">${risk.level} RISK</span>
+                            </div>
+                            <div class="text-xs text-slate-300 leading-relaxed font-medium">${risk.description}</div>
+                        `;
+                        riskBox.appendChild(div);
+                    });
+                } else if (data.risk_signals && data.risk_signals.portfolio_volatility_pct) {
+                    // Fallback to basic risk stats if explicitly structured risks aren't found
+                    const vol = data.risk_signals.portfolio_volatility_pct;
+                    const status = data.risk_signals.diversification_status;
+                    const div = document.createElement('div');
+                    div.className = `p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 transition-all`;
+                    div.innerHTML = `
+                         <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-blue-400">Portfolio Stability</span>
+                            <span class="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-[8px] font-black uppercase">Active Analysis</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-400">Total Volatility</span>
+                                <span class="text-white font-bold">${vol}%</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-400">Diversification</span>
+                                <span class="text-green-400 font-extrabold uppercase">${status}</span>
+                            </div>
+                        </div>
+                    `;
+                    riskBox.appendChild(div);
+                } else {
+                    riskBox.innerHTML = '<div class="p-8 text-center text-slate-500 text-xs">Security risk signals synchronized. No critical alerts.</div>';
+                }
+            } catch (e) { console.error('Risk Data Error:', e); }
+        }
+
+        async function changePeriod(period) {
+            currentPeriod = period;
+            // Update UI
+            document.querySelectorAll('.period-btn').forEach(b => {
+                b.classList.remove('text-white', 'bg-[#474d57]', 'rounded-sm');
+                b.classList.add('text-gray-400');
+            });
+            const activeBtn = document.getElementById('btn-' + period);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-gray-400');
+                activeBtn.classList.add('text-white', 'bg-[#474d57]', 'rounded-sm');
+            }
+
+            if (currentTicker) {
+                await renderChart(currentTicker);
+                await loadIndicatorData(currentTicker);
+            }
+        }
+
+        async function loadIndicatorData(ticker) {
+            try {
+                // Ensure correct period is passed to indicators
+                const res = await fetch(`/api/us/technical-indicators/${ticker}?period=${currentPeriod}`);
+                const data = await res.json();
+
+                // Guard: only update if ticker still matches
+                if (currentTicker !== ticker) return;
+
+                indicatorData = data;
+                if (indicatorData.error) {
+                    console.error('Indicator Data Error:', indicatorData.error);
+                    return;
+                }
+
+                // Update active indicators if checked - USE TRY CATCH TO PROTECT EACH
+                try { if (document.getElementById('check-bb').checked) renderBB(); } catch (e) { console.error('BB Error:', e); }
+                try { if (document.getElementById('check-rsi').checked) renderRSI(); } catch (e) { console.error('RSI Error:', e); }
+                try { if (document.getElementById('check-macd').checked) renderMACD(); } catch (e) { console.error('MACD Error:', e); }
+            } catch (e) { console.error('Indicators Fetch Error:', e); }
+        }
+
+        async function toggleIndicator(type) {
+            const isChecked = document.getElementById('check-' + type).checked;
+            if (type === 'bb') {
+                if (isChecked) renderBB();
+                else clearBB();
+            } else if (type === 'rsi') {
+                const el = document.getElementById('rsi-chart');
+                if (isChecked) { el.classList.remove('hidden'); renderRSI(); }
+                else { el.classList.add('hidden'); if (rsiChart) { rsiChart.remove(); rsiChart = null; } }
+            } else if (type === 'macd') {
+                const el = document.getElementById('macd-chart');
+                if (isChecked) { el.classList.remove('hidden'); renderMACD(); }
+                else { el.classList.add('hidden'); if (macdChart) { macdChart.remove(); macdChart = null; } }
+            }
+        }
+
+        function renderBB() {
+            if (!indicatorData || !currentChart) return;
+            clearBB();
+            const timestamps = indicatorData.timestamps;
+            const bb = indicatorData.bb;
+
+            bbSeriesUpper = currentChart.addLineSeries({ color: 'rgba(255, 193, 7, 0.3)', lineWidth: 1, lineStyle: 2, title: 'BB Upper' });
+            bbSeriesLower = currentChart.addLineSeries({ color: 'rgba(255, 193, 7, 0.3)', lineWidth: 1, lineStyle: 2, title: 'BB Lower' });
+            bbSeriesMiddle = currentChart.addLineSeries({ color: 'rgba(255, 193, 7, 0.6)', lineWidth: 1, title: 'BB Basis' });
+
+            const upperData = timestamps.map((t, i) => ({ time: t, value: bb.upper[i] })).filter(d => d.value !== 0);
+            const lowerData = timestamps.map((t, i) => ({ time: t, value: bb.lower[i] })).filter(d => d.value !== 0);
+            const middleData = timestamps.map((t, i) => ({ time: t, value: bb.middle[i] })).filter(d => d.value !== 0);
+
+            bbSeriesUpper.setData(upperData);
+            bbSeriesLower.setData(lowerData);
+            bbSeriesMiddle.setData(middleData);
+        }
+
+        function clearBB() {
+            if (!currentChart) return;
+            if (bbSeriesUpper) { currentChart.removeSeries(bbSeriesUpper); bbSeriesUpper = null; }
+            if (bbSeriesLower) { currentChart.removeSeries(bbSeriesLower); bbSeriesLower = null; }
+            if (bbSeriesMiddle) { currentChart.removeSeries(bbSeriesMiddle); bbSeriesMiddle = null; }
+        }
+
+        function renderRSI() {
+            if (!indicatorData || !currentChart) return;
+            const container = document.getElementById('rsi-chart');
+            if (rsiChart) { rsiChart.remove(); rsiChart = null; }
+
+            const width = container.clientWidth || 600;
+            rsiChart = LightweightCharts.createChart(container, {
+                layout: { background: { color: 'transparent' }, textColor: '#94A3B8', fontSize: 10 },
+                grid: { vertLines: { visible: false }, horzLines: { color: 'rgba(255, 255, 255, 0.05)' } },
+                timeScale: { visible: false },
+                rightPriceScale: { borderColor: 'rgba(255, 255, 255, 0.05)', scaleMargins: { top: 0.1, bottom: 0.1 } },
+                width: width,
+                height: 100,
+                handleScroll: false,
+                handleScale: false
+            });
+
+            const rsiSeries = rsiChart.addLineSeries({ color: '#FFC107', lineWidth: 2, title: 'RSI(14)' });
+            const data = indicatorData.timestamps.map((t, i) => ({ time: t, value: indicatorData.rsi[i] })).filter(d => d.value !== 0);
+            rsiSeries.setData(data);
+
+            // Add 70/30 lines
+            const line70 = rsiChart.addLineSeries({ color: 'rgba(246, 70, 93, 0.5)', lineWidth: 1, lineStyle: 2 });
+            line70.setData(indicatorData.timestamps.map(t => ({ time: t, value: 70 })));
+            const line30 = rsiChart.addLineSeries({ color: 'rgba(14, 203, 129, 0.5)', lineWidth: 1, lineStyle: 2 });
+            line30.setData(indicatorData.timestamps.map(t => ({ time: t, value: 30 })));
+
+            syncCharts(currentChart, rsiChart);
+        }
+
+        function renderMACD() {
+            if (!indicatorData || !currentChart) return;
+            const container = document.getElementById('macd-chart');
+            if (macdChart) { macdChart.remove(); macdChart = null; }
+
+            const width = container.clientWidth || 600;
+            macdChart = LightweightCharts.createChart(container, {
+                layout: { background: { color: 'transparent' }, textColor: '#94A3B8', fontSize: 10 },
+                grid: { vertLines: { visible: false }, horzLines: { color: 'rgba(255, 255, 255, 0.05)' } },
+                timeScale: { borderColor: 'rgba(255, 255, 255, 0.05)' },
+                rightPriceScale: { borderColor: 'rgba(255, 255, 255, 0.05)' },
+                width: width,
+                height: 100,
+                handleScroll: false,
+                handleScale: false
+            });
+
+            const macdLine = macdChart.addLineSeries({ color: '#2962FF', lineWidth: 1.5, title: 'MACD' });
+            const signalLine = macdChart.addLineSeries({ color: '#FF6D00', lineWidth: 1.5, title: 'Signal' });
+            const histSeries = macdChart.addHistogramSeries({ title: 'Histogram' });
+
+            const timestamps = indicatorData.timestamps;
+            macdLine.setData(timestamps.map((t, i) => ({ time: t, value: indicatorData.macd.line[i] })).filter(d => d.value !== 0));
+            signalLine.setData(timestamps.map((t, i) => ({ time: t, value: indicatorData.macd.signal[i] })).filter(d => d.value !== 0));
+
+            const histData = timestamps.map((t, i) => {
+                const val = indicatorData.macd.hist[i];
+                return {
+                    time: t,
+                    value: val,
+                    color: val >= 0 ? 'rgba(14, 203, 129, 0.5)' : 'rgba(246, 70, 93, 0.5)'
+                };
+            }).filter(d => d.value !== 0);
+            histSeries.setData(histData);
+
+            syncCharts(currentChart, macdChart);
+        }
+
+        function syncCharts(main, sub) {
+            if (!main || !sub) return;
+            main.timeScale().subscribeVisibleTimeRangeChange(range => {
+                sub.timeScale().setVisibleRange(range);
+            });
+            sub.timeScale().subscribeVisibleTimeRangeChange(range => {
+                main.timeScale().setVisibleRange(range);
+            });
+        }
+
+        // Initialize Global Resize Handler once
+        window.addEventListener('resize', () => {
+            const container = document.getElementById('price-chart');
+            if (!container) return;
+            const newWidth = container.clientWidth;
+            if (newWidth > 0) {
+                if (currentChart) currentChart.applyOptions({ width: newWidth });
+                if (rsiChart) rsiChart.applyOptions({ width: newWidth });
+                if (macdChart) macdChart.applyOptions({ width: newWidth });
+            }
+        });
+
+        async function renderChart(ticker) {
+            const container = document.getElementById('price-chart');
+            container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Loading chart...</div>';
+
+            // Immediate cleanup of ALL charts to prevent collisions
+            if (currentChart) { currentChart.remove(); currentChart = null; }
+            if (rsiChart) { rsiChart.remove(); rsiChart = null; }
+            if (macdChart) { macdChart.remove(); macdChart = null; }
+            clearBB();
+
+            // Wait a bit for DOM to settle
+            await new Promise(r => setTimeout(r, 100));
+            container.innerHTML = '';
+
+            const width = container.clientWidth || 600;
+            const height = 300;
+
+            currentChart = LightweightCharts.createChart(container, {
+                layout: { background: { color: 'transparent' }, textColor: '#94A3B8' },
+                grid: { vertLines: { color: 'rgba(255, 255, 255, 0.05)' }, horzLines: { color: 'rgba(255, 255, 255, 0.05)' } },
+                timeScale: { borderColor: 'rgba(255, 255, 255, 0.05)', timeVisible: true, secondsVisible: false },
+                rightPriceScale: { borderColor: 'rgba(255, 255, 255, 0.05)' },
+                width: width,
+                height: height
+            });
+
+            const candleSeries = currentChart.addCandlestickSeries({
+                upColor: '#00C853', downColor: '#FF1744', borderVisible: false, wickUpColor: '#00C853', wickDownColor: '#FF1744'
+            });
+
+            try {
+                console.log(`Fetching chart for ${ticker}...`);
+                const res = await fetch(`/api/us/stock-chart/${ticker}?period=${currentPeriod}`);
+                const data = await res.json();
+
+                // Guard: only update if ticker still matches
+                if (currentTicker !== ticker) {
+                    console.warn(`Ticker changed from ${ticker} to ${currentTicker}, skipping renderChart update.`);
+                    return;
+                }
+
+                if (data.error) throw new Error(data.error);
+
+                if (!currentChart) {
+                    console.error("Chart instance lost during fetch for " + ticker);
+                    return;
+                }
+
+                candleSeries.setData(data.candles);
+                currentChart.timeScale().fitContent();
+
+                // If sub-charts exist, sync them
+                if (rsiChart) rsiChart.timeScale().fitContent();
+                if (macdChart) macdChart.timeScale().fitContent();
+                console.log(`Chart for ${ticker} rendered successfully.`);
+            } catch (e) {
+                console.error('Chart Error:', e);
+                let msg = `Failed to load data for ${ticker}`;
+                if (e.message.includes('rate limited')) {
+                    msg = `Rate limit exceeded for ${ticker}. Using cached data or try again later.`;
+                }
+                container.innerHTML = `<div class="flex items-center justify-center h-full text-gray-400 text-[10px] px-8 text-center italic leading-relaxed">${msg}</div>`;
+            }
+        }
+
+        async function loadETFFlows() {
+            try {
+                const res = await fetch('/api/us/etf-flows');
+                const data = await res.json();
+
+                const renderArr = (items, targetId) => {
+                    const el = document.getElementById(targetId);
+                    el.innerHTML = '';
+                    if (!items || items.length === 0) {
+                        el.innerHTML = '<div class="text-[10px] text-gray-500 italic">No data</div>';
+                        return;
+                    }
+                    items.slice(0, 5).forEach(etf => {
+                        const div = document.createElement('div');
+                        div.className = 'flex justify-between items-center py-1.5 border-b border-white/[0.03] last:border-0';
+                        const scoreClass = etf.flow_score > 55 ? 'text-[--success]' : (etf.flow_score < 45 ? 'text-[--danger]' : 'text-slate-400');
+                        div.innerHTML = `
+                            <span class="text-slate-400 font-bold tracking-tight">${etf.ticker}</span>
+                            <span class="font-black ${scoreClass}">${etf.flow_score}</span>
+                        `;
+                        el.appendChild(div);
+                    });
+                };
+
+                const flows = data.flows || [];
+                const inflowList = flows.filter(f => f.flow_score > 55).sort((a, b) => b.flow_score - a.flow_score);
+                const outflowList = flows.filter(f => f.flow_score < 45).sort((a, b) => a.flow_score - b.flow_score);
+
+                renderArr(inflowList, 'etf-inflows');
+                renderArr(outflowList, 'etf-outflows');
+
+                // Detailed view render
+                const renderDetailed = (items, targetId) => {
+                    const el = document.getElementById(targetId);
+                    if (!el) return;
+                    el.innerHTML = '';
+                    if (!items || items.length === 0) {
+                        el.innerHTML = '<div class="text-gray-500 italic p-4 text-center">No ETF data currently available</div>';
+                        return;
+                    }
+                    items.forEach(etf => {
+                        const div = document.createElement('div');
+                        div.className = 'glass-panel p-5 rounded-2xl flex justify-between items-center bg-white/[0.01] hover:bg-white/[0.03] transition-all';
+                        div.innerHTML = `
+                            <div>
+                                <div class="font-black text-white text-lg tracking-tight">${etf.ticker}</div>
+                                <div class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">${etf.name}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-black text-[--primary]">${etf.flow_score}</div>
+                                <div class="text-[9px] uppercase font-black tracking-[0.1em] ${etf.flow_stage.includes('Inflow') ? 'text-[--success]' : 'text-[--danger]'}">${etf.flow_stage}</div>
+                            </div>
+                        `;
+                        el.appendChild(div);
+                    });
+                };
+                renderDetailed(inflowList, 'etf-inflows-detail');
+                renderDetailed(outflowList, 'etf-outflows-detail');
+            } catch (e) { }
+        }
+
+        async function loadOptionsFlow() {
+            try {
+                const res = await fetch('/api/us/options-flow');
+                if (!res.ok) throw new Error('API error');
+                const data = await res.json();
+
+                const el = document.getElementById('options-mini');
+                const detailEl = document.getElementById('options-detailed-list');
+
+                el.innerHTML = '';
+                if (detailEl) detailEl.innerHTML = '';
+
+                const flows = data.options_flow || [];
+                if (flows.length === 0) {
+                    el.innerHTML = '<div class="col-span-2 text-center text-gray-500 text-[10px] py-4 italic">No sentiment data available</div>';
+                    if (detailEl) detailEl.innerHTML = '<div class="text-center text-gray-500 py-8 italic">No unusual options flow data currently found</div>';
+                    return;
+                }
+
+                flows.slice(0, 10).forEach(o => {
+                    const sentiment = o.metrics ? o.metrics.sentiment : 'Neutral';
+                    const pcRatio = o.metrics ? o.metrics.pc_ratio : 1.0;
+
+                    const div = document.createElement('div');
+                    div.className = 'bg-[#1e2329] p-2 rounded flex flex-col gap-1';
+                    div.innerHTML = `
+                        <div class="flex justify-between font-bold text-white text-[10px]">
+                            <span>${o.ticker}</span>
+                            <span class="${sentiment.includes('Bullish') ? 'text-green-400' : 'text-red-400'}">${sentiment}</span>
+                        </div>
+                        <div class="text-[9px] text-gray-500">P/C Ratio: ${pcRatio}</div>
+                    `;
+                    el.appendChild(div);
+
+                    // Detailed List
+                    if (detailEl) {
+                        const d = document.createElement('div');
+                        d.className = 'glass-panel p-4 rounded-lg border-l-4 ' + (sentiment.includes('Bullish') ? 'border-green-500' : 'border-red-500');
+                        d.innerHTML = `
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="text-lg font-bold text-white">${o.ticker}</div>
+                                <div class="px-3 py-1 rounded-full text-xs font-bold ${sentiment.includes('Bullish') ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}">${sentiment}</div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4 text-xs text-gray-400">
+                                <div>Call Vol: ${o.metrics.call_vol}</div>
+                                <div>Put Vol: ${o.metrics.put_vol}</div>
+                                <div>OI Ratio: ${o.metrics.pc_ratio}</div>
+                            </div>
+                        `;
+                        detailEl.appendChild(d);
+                    }
+                });
+            } catch (e) {
+                console.error('Options Flow Error:', e);
+            }
+        }
+
+        async function loadCalendar() {
+            try {
+                const res = await fetch('/api/us/calendar');
+                const data = await res.json();
+                const el = document.getElementById('calendar-content');
+                if (!el) return;
+
+                if (!data.events || data.events.length === 0) {
+                    el.textContent = 'No major economic events scheduled for this period.';
+                    return;
+                }
+
+                el.innerHTML = '<div class="space-y-3"></div>';
+                const container = el.querySelector('div');
+                data.events.slice(0, 10).forEach(ev => {
+                    const d = document.createElement('div');
+                    d.className = 'flex gap-6 items-center p-5 border-b border-white/[0.03] last:border-0 hover:bg-white/[0.02] transition-all group';
+                    d.innerHTML = `
+                        <div class="text-slate-500 font-mono text-[10px] w-28 shrink-0 font-bold uppercase tracking-wider">${ev.date}</div>
+                        <div class="flex-1 font-extrabold text-white text-sm tracking-tight group-hover:text-[--primary] transition-colors">${ev.event}</div>
+                        <div class="px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-[--primary]/10 text-[--primary] border border-[--primary]/20">${ev.importance || 'MEDIUM'}</div>
+                    `;
+                    container.appendChild(d);
+                });
+            } catch (e) { }
+        }
+
+        async function loadSectorHeatmap() {
+            try {
+                const res = await fetch('/api/us/sector-heatmap');
+                const data = await res.json();
+                const container = document.getElementById('sector-heatmap');
+
+                if (!data.series || data.series.length === 0) {
+                    container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500 italic">No heatmap data available. Run update_all.py first.</div>';
+                    return;
+                }
+
+                const options = {
+                    series: data.series,
+                    legend: { show: true, position: 'top', horizontalAlign: 'left', labels: { colors: '#94A3B8', useSeriesColors: false }, fontFamily: 'Manrope' },
+                    chart: {
+                        height: 300,
+                        type: 'treemap',
+                        toolbar: { show: false },
+                        background: 'transparent',
+                        fontFamily: 'Manrope, sans-serif'
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        style: { fontSize: '11px', fontWeight: 'bold' },
+                        formatter: function (text, op) {
+                            return [text, op.value.toFixed(1) + '%'];
+                        }
+                    },
+                    plotOptions: {
+                        treemap: {
+                            distributed: true,
+                            enableShades: false
+                        }
+                    },
+                    stroke: { show: true, width: 2, colors: ['#0A0C10'] },
+                    theme: { mode: 'dark', palette: 'palette1' },
+                    tooltip: {
+                        theme: 'dark',
+                        y: { formatter: (val) => val.toLocaleString() }
+                    }
+                };
+
+                if (heatmapChart) {
+                    heatmapChart.destroy();
+                }
+
+                container.innerHTML = '';
+                heatmapChart = new ApexCharts(container, options);
+                await heatmapChart.render();
+            } catch (e) {
+                console.error('Heatmap Error:', e);
+                document.getElementById('sector-heatmap').innerHTML = '<div class="text-red-500 text-xs p-4 text-center italic">Error loading heatmap data</div>';
+            }
+        }
+
+        // --- Initialization ---
+        async function initDashboard() {
+            updateTimestamp();
+            loadMacroData();
+            loadSmartMoneyPicks();
+            loadETFFlows();
+            loadOptionsFlow();
+            loadCalendar();
+            loadSectorHeatmap();
+            updateQuotaStatus();
+            pollPipelineStatus(); // Start new static status polling
+            // Auto-trigger analysis on startup (Silent)
+            runPipeline(true);
+            // Polling & Scheduled Refresh
+            setInterval(updateQuotaStatus, 60000); // 1m
+            setInterval(loadSmartMoneyPicks, 120000); // 2m
+            setInterval(loadMacroData, 3600000); // 1h
+            setInterval(loadCalendar, 3600000); // 1h
+        }
+
+        document.addEventListener('DOMContentLoaded', initDashboard);
+
+        async function pollPipelineStatus() {
+            try {
+                const res = await fetch('/api/pipeline-status');
+                const data = await res.json();
+
+                const actEl = document.getElementById('stat-activity');
+                const tgtEl = document.getElementById('stat-target');
+                const prgEl = document.getElementById('stat-progress');
+                const detEl = document.getElementById('stat-details');
+                const detBox = document.getElementById('status-details-box');
+                const syncEl = document.getElementById('stat-sync');
+
+                const isActive = data.is_running || (data.current_task && !['IDLE', 'COMPLETED', 'DONE', '---'].includes(data.current_task.toUpperCase()));
+
+                if (isActive) {
+                    actEl.textContent = data.current_task.toUpperCase();
+                    actEl.classList.remove('status-idle');
+                    actEl.classList.add('text-[--primary]');
+
+                    if (data.details && data.details.includes(':')) {
+                        const parts = data.details.split(':');
+                        tgtEl.textContent = parts[0].trim();
+                        detEl.textContent = parts[1].trim();
+                    } else {
+                        tgtEl.textContent = "Processing";
+                        detEl.textContent = data.details || "Working...";
+                    }
+
+                    prgEl.textContent = data.progress;
+                    detBox.classList.remove('opacity-0');
+                    detBox.classList.add('opacity-100');
+                } else {
+                    actEl.textContent = "SYSTEM IDLE";
+                    actEl.classList.add('status-idle');
+                    actEl.classList.remove('text-[--primary]');
+                    tgtEl.textContent = "---";
+                    prgEl.textContent = "DONE";
+                    detBox.classList.add('opacity-0');
+                    detBox.classList.remove('opacity-100');
+
+                    if (data.timestamp) {
+                        const d = new Date(data.timestamp);
+                        syncEl.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    }
+                }
+            } catch (e) { console.error('Status Poll Failed'); }
+            setTimeout(pollPipelineStatus, 15000);
+        }
+
+        async function runPipeline(silent = false) {
+            try {
+                const res = await fetch('/api/run-pipeline', { method: 'POST' });
+                const data = await res.json();
+                if (!silent) {
+                    if (data.status === 'started') {
+                        console.log('Pipeline started successfully');
+                    } else {
+                        console.warn('Pipeline trigger issue:', data.reason);
+                    }
+                }
+            } catch (e) {
+                if (!silent) console.error('Pipeline Trigger Failed:', e);
+            }
+        }
+
+    </script>
+</body>
+
+</html>
